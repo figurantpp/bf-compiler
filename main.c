@@ -4,13 +4,12 @@
 #include "bfc/bfc.h"
 #include "external/stream.h"
 
-#define BF_SOURCE_FILE_PATH "/tmp/c/bfc/bf_input/self-output.bf"
+#define BF_SOURCE_FILE_PATH "/home/figurantpp/Desktop/programming/c/bf-c/compiler_input/hello-word.bf"
 #define BF_ASSEMBLY_TEMP_FILE_TEMPLATE "bfc_tmp_asm_XXXXXX"
-#define BF_OUTPUT_PROGRAM_PATH "/tmp/c/bfc/cmake-build-debug/compiler-output"
+#define BF_OUTPUT_PROGRAM_PATH "/home/figurantpp/Desktop/programming/c/bf-c/cmake-build-debug/compiler-output"
 
 int main()
 {
-
     FILE *source_code_stream = fopen(BF_SOURCE_FILE_PATH, "r");
 
     if (source_code_stream == NULL)
