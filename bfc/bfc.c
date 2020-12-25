@@ -264,6 +264,8 @@ int bfc_loop(struct BFCState *state)
             case ',':
                 bfc_compile_read(state);
                 break;
+            default:
+                state->source_code_cursor++;
         }
     }
 
