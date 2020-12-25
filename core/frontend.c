@@ -2,7 +2,7 @@
 // Created by figurantpp on 24/12/2020.
 //
 
-#include "bfc.h"
+#include "frontend.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -33,7 +33,7 @@ struct BFCState
 #define DATA_BUFFER_SIZE "8192"
 
 
-#include "bfc.h"
+#include "frontend.h"
 
 char *bfc_get_left_label_name(size_t left_brace_index)
 {

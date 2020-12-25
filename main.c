@@ -1,67 +1,85 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 
-#include "bfc/bfc.h"
-#include "external/stream.h"
+#include "compilation/compilation.h"
 
-#define BF_SOURCE_FILE_PATH "/home/figurantpp/Desktop/programming/c/bf-c/compiler_input/mandel.bf"
-#define BF_ASSEMBLY_TEMP_FILE_TEMPLATE "bfc_tmp_asm_XXXXXX"
-#define BF_OUTPUT_PROGRAM_PATH "/home/figurantpp/Desktop/programming/c/bf-c/cmake-build-debug/compiler-output"
+#define BFC_EXIT_BAD_USAGE 2
 
-int main()
+// #define BF_SOURCE_FILE_PATH "/home/figurantpp/Desktop/programming/c/bf-c/compiler_input/mandel.bf"
+// #define BF_OUTPUT_PROGRAM_PATH "/home/figurantpp/Desktop/programming/c/bf-c/cmake-build-debug/compiler-output"
+
+#define compilation_modes(x) \
+    x(STANDARD)              \
+    x(ASSEMBLY_ONLY)         \
+
+#define to_enum(macro) BFC_COMPILATION_MODE_##macro,
+
+enum BFC_COMPILATION_MODE
 {
-    FILE *source_code_stream = fopen(BF_SOURCE_FILE_PATH, "r");
+    compilation_modes(to_enum)
+};
 
-    if (source_code_stream == NULL)
+#undef to_enum
+
+int main(int argc, char *argv[])
+{
+#define show_usage() ({fprintf(stderr, "Usage: %s [-S] -i in_file -o out_file\n", argv[0]); })
+
+    enum BFC_COMPILATION_MODE mode = BFC_COMPILATION_MODE_STANDARD;
+
+    const char *input_file = NULL;
+    const char *output_file = NULL;
+
+    int option;
+
+
+    while ((option = getopt(argc, argv, "Si:o:")) != -1)
     {
-        perror("Failed to read source code");
-        abort();
+        switch (option)
+        {
+            case 'S':
+                mode = BFC_COMPILATION_MODE_ASSEMBLY_ONLY;
+                break;
+
+            case 'o':
+                output_file = optarg;
+                break;
+
+            case 'i':
+                input_file = optarg;
+                break;
+
+            default:
+                show_usage();
+                exit(BFC_EXIT_BAD_USAGE);
+        }
     }
 
-    size_t source_code_length = 0;
-    char *source_code = NULL;
+    int error = 0;
 
-    source_code = read_whole_file(source_code_stream, &source_code_length);
-
-    fclose(source_code_stream);
-
-    if (source_code == NULL)
+    if (output_file == NULL)
     {
-        perror("Failed to read source code");
-        abort();
+        fputs("Missing required output file (-o) argument.", stderr);
+        error = 1;
     }
 
-    char assembly_output_file_name[] = BF_ASSEMBLY_TEMP_FILE_TEMPLATE;
-
-    int assembly_output_file = mkstemp(assembly_output_file_name);
-
-    if (assembly_output_file == -1)
+    if (input_file == NULL)
     {
-        perror("Failed to create file to write assembly output");
-        abort();
+        fputs("Missing required input file (-i) argument.", stderr);
+        error = 1;
     }
 
-    FILE *assembly_output_stream = fdopen(assembly_output_file, "w");
-
-    if (assembly_output_stream == NULL)
+    if (error)
     {
-        perror("Failed to open stream to write assembly output");
-        abort();
+        show_usage();
+        exit(BFC_EXIT_BAD_USAGE);
     }
 
-    int status = bfc_run_frontend(source_code, source_code_length, assembly_output_stream);
+    BFCCompilerFunction* functions[] = {
+            [BFC_COMPILATION_MODE_STANDARD] = bfc_compile_program,
+            [BFC_COMPILATION_MODE_ASSEMBLY_ONLY] = bfc_compile_assembly
+    };
 
-    fclose(assembly_output_stream);
-
-
-    if (status == 0)
-    {
-        status = bfc_run_backend(BF_OUTPUT_PROGRAM_PATH, assembly_output_file_name);
-    }
-
-    remove(assembly_output_file_name);
-
-    free(source_code);
-
-    return status;
+    return functions[mode](input_file, output_file);
 }

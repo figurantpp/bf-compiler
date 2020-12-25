@@ -2,8 +2,8 @@
 // Created by figurantpp on 24/12/2020.
 //
 
-#ifndef BFC_BFC_H
-#define BFC_BFC_H
+#ifndef BFC_FRONTEND_H
+#define BFC_FRONTEND_H
 
 #include <bits/types/FILE.h>
 #include <sys/wait.h>
@@ -24,4 +24,4 @@ int bfc_run_backend(const char *output_file_name, const char *assembly_file_name
 
 
 
-#endif //BFC_BFC_H
+#endif //BFC_FRONTEND_H
