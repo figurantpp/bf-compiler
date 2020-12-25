@@ -4,7 +4,7 @@
 #include "bfc/bfc.h"
 #include "external/stream.h"
 
-#define BF_SOURCE_FILE_PATH "/home/figurantpp/Desktop/programming/c/bf-c/compiler_input/hello-word.bf"
+#define BF_SOURCE_FILE_PATH "/home/figurantpp/Desktop/programming/c/bf-c/compiler_input/mandel.bf"
 #define BF_ASSEMBLY_TEMP_FILE_TEMPLATE "bfc_tmp_asm_XXXXXX"
 #define BF_OUTPUT_PROGRAM_PATH "/home/figurantpp/Desktop/programming/c/bf-c/cmake-build-debug/compiler-output"
 
