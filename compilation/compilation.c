@@ -50,6 +50,7 @@ int bfc_compile_program(const char *source_code_file_path, const char *output_pr
     if (assembly_output_stream == NULL)
     {
         perror("Failed to open stream to write assembly output");
+        free(source_code);
         abort();
     }
 
