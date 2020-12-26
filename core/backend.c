@@ -2,10 +2,33 @@
 // Created by figurantpp on 25/12/2020.
 //
 
-#define ASSEMBLER_PATH "/usr/bin/yasm"
-#define ASSEMBLER_NAME "yasm"
+#include "temp_config.h"
+
 #define LINKER_PATH "/bin/ld"
 #define LINKER_NAME "ld"
+
+// This is a temporary fix. We eventually have to supply this as an argument.
+
+// TODO: Refactor this
+
+#if IS_NASM
+
+#define ASSEMBLER_PATH "/usr/bin/yasm"
+#define ASSEMBLER_NAME "yasm"
+
+#define construct_assembler_call(input_name, output_name) \
+ "-f", "elf64", "-g", "dwarf2", \
+ input_name, "-o", output_name
+
+#else
+
+#define ASSEMBLER_PATH "/usr/bin/as"
+#define ASSEMBLER_NAME "as"
+
+#define construct_assembler_call(input_name, output_name) \
+"-g", input_name, "-o", output_name
+
+#endif
 
 #include <string.h>
 #include <stdio.h>
@@ -14,6 +37,7 @@
 #include <sys/wait.h>
 
 #define BF_TEMP_OBJECT_FILE_TEMPLATE "bfc_tmp_object_file_XXXXXX"
+
 
 // runs the assembler and returns the name of the object file.
 char *run_assembler(const char *assembly_file_name)
@@ -48,8 +72,7 @@ char *run_assembler(const char *assembly_file_name)
             // Child
 
             if (execl(ASSEMBLER_PATH, ASSEMBLER_NAME,
-                      "-f", "elf64", "-g", "dwarf2",
-                      assembly_file_name, "-o", object_file_name, NULL) == -1)
+                      construct_assembler_call(assembly_file_name, object_file_name), NULL) == -1)
             {
                 perror("Failed to execute assembler");
                 exit(255);

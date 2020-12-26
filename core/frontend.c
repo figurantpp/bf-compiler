@@ -32,7 +32,6 @@ struct BFCState
     size_t source_code_length;
 };
 
-#define DATA_BUFFER_SIZE "8192"
 
 #include "frontend.h"
 
@@ -258,30 +257,12 @@ int bfc_loop(struct BFCState *state)
 
 void bfc_write_start(struct BFCState *state)
 {
-    fputs(
-            ""
-            "section .bss\n"
-            "buffer resb " DATA_BUFFER_SIZE "\n"
-            "section .text\n"
-            "global _start\n"
-            "_start:\n"
-            "mov rdi, 1\n"
-            "mov rdx, 1\n"
-            "mov rsi, buffer\n",
-
-            state->output_file
-    );
+    bfc_asm_program_start(state->output_file);
 }
 
 void bfc_write_end(struct BFCState *state)
 {
-    fputs(
-            ""
-            "mov rax, 60\n"
-            "mov rdi, 0\n"
-            "syscall\n",
-            state->output_file
-    );
+    bfc_asm_program_end(state->output_file);
 }
 
 static const char *bfc_get_matching_right_brace(struct BFCState *state, const char *const left_brace)
