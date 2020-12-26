@@ -13,6 +13,8 @@
 #define LEFT_BRACE_PREFIX "left_brace_"
 #define RIGHT_BRACE_PREFIX "right_brace_"
 
+#include "frontend_asm.h"
+
 #define NUMERIC_BUFFER_SIZE 64
 
 struct BFCState
@@ -31,7 +33,6 @@ struct BFCState
 };
 
 #define DATA_BUFFER_SIZE "8192"
-
 
 #include "frontend.h"
 
@@ -75,11 +76,11 @@ void bfc_compile_data_increment(struct BFCState *state)
 
     if (increment_count == 1)
     {
-        fputs("inc byte [rsi]\n", state->output_file);
+        bfc_asm_increase_rsi_content(state->output_file);
     }
     else
     {
-        fprintf(state->output_file, "add byte [rsi], %zu\n", increment_count);
+        bfc_asm_add_rsi_content(state->output_file, increment_count);
     }
 
     fflush(state->output_file);
@@ -97,11 +98,12 @@ void bfc_compile_data_decrement(struct BFCState *state)
 
     if (decrement_count == 1)
     {
-        fputs("dec byte [rsi]\n", state->output_file);
+        bfc_asm_decrease_rsi_content(state->output_file);
     }
     else
     {
-        fprintf(state->output_file, "sub byte [rsi], %zu\n", decrement_count);
+        bfc_asm_subtract_rsi_content(state->output_file, decrement_count);
+
     }
 
     fflush(state->output_file);
@@ -119,11 +121,11 @@ void bfc_compile_data_advance(struct BFCState *state)
 
     if (advance_count == 1)
     {
-        fprintf(state->output_file, "inc rsi\n");
+        bfc_asm_increase_rsi(state->output_file);
     }
     else
     {
-        fprintf(state->output_file, "add rsi, %zu\n", advance_count);
+        bfc_asm_add_rsi(state->output_file, advance_count);
     }
 
     fflush(state->output_file);
@@ -142,11 +144,11 @@ void bfc_compile_data_retreat(struct BFCState *state)
 
     if (retreat_count == 1)
     {
-        fputs("dec rsi\n", state->output_file);
+        bfc_asm_decrease_rsi(state->output_file);
     }
     else
     {
-        fprintf(state->output_file, "sub rsi, %zu\n", retreat_count);
+        bfc_asm_subtract_rsi(state->output_file, retreat_count);
     }
 
     fflush(state->output_file);
@@ -154,9 +156,7 @@ void bfc_compile_data_retreat(struct BFCState *state)
 
 void bfc_compile_write(struct BFCState *state)
 {
-    fprintf(state->output_file,
-            "mov rax, 1\n"
-            "syscall\n");
+    bfc_asm_write(state->output_file);
 
     fflush(state->output_file);
 
@@ -165,9 +165,7 @@ void bfc_compile_write(struct BFCState *state)
 
 void bfc_compile_read(struct BFCState *state)
 {
-    fprintf(state->output_file,
-            "mov rax, 0\n"
-            "syscall\n");
+    bfc_asm_read(state->output_file);
 
     fflush(state->output_file);
 }
@@ -184,15 +182,8 @@ int bfc_compile_left_brace(struct BFCState *state)
         return -1;
     }
 
-    fprintf(
-            state->output_file,
-            ""
-            "cmp byte [rsi], 0\n"
-            "je %s\n"
-            "%s:\n",
-            label_data->matching_label,
-            label_data->self_label
-    );
+    bfc_asm_jump_if_zero(state->output_file, label_data->matching_label);
+    bfc_asm_set_label(state->output_file, label_data->self_label);
 
     fflush(state->output_file);
 
@@ -213,15 +204,8 @@ int bfc_compile_right_brace(struct BFCState *state)
         return -1;
     }
 
-    fprintf(
-            state->output_file,
-            ""
-            "cmp byte [rsi], 0\n"
-            "jne %s\n"
-            "%s:\n",
-            label_data->matching_label,
-            label_data->self_label
-    );
+    bfc_asm_jump_if_not_zero(state->output_file, label_data->matching_label);
+    bfc_asm_set_label(state->output_file, label_data->self_label);
 
     fflush(state->output_file);
 

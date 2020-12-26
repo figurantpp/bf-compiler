@@ -10,7 +10,7 @@ add_library(external
 add_library(bfc_core
         STATIC
         core/frontend.c core/frontend.h core/backend.c
-)
+        core/frontend_asm.h)
 
 add_library(bfc_compilation
         STATIC

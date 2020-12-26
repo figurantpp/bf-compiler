@@ -5,7 +5,7 @@
 #ifndef BFC_FRONTEND_H
 #define BFC_FRONTEND_H
 
-#include <bits/types/FILE.h>
+#include <stdio.h>
 #include <sys/wait.h>
 
 #define BFC_DEFAULT_EXECUTION_BUFFER_LIMIT 8192lu
