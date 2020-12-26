@@ -5,13 +5,18 @@
 #include "compilation.h"
 #include "../external/stream.h"
 #include "../core/frontend.h"
+#include "../core/backend.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #define BF_ASSEMBLY_TEMP_FILE_TEMPLATE "bfc_tmp_asm_XXXXXX"
 
-int bfc_compile_program(const char *source_code_file_path, const char *output_program_file_path)
+int bfc_compile_program(
+        const char *source_code_file_path,
+        const char *output_program_file_path,
+        const struct CompilationFormat *compilation_format
+)
 {
     FILE *source_code_stream = fopen(source_code_file_path, "r");
 
@@ -54,14 +59,14 @@ int bfc_compile_program(const char *source_code_file_path, const char *output_pr
         abort();
     }
 
-    int status = bfc_run_frontend(source_code, source_code_length, assembly_output_stream);
+    int status = bfc_run_frontend(source_code, source_code_length, assembly_output_stream, &compilation_format->output_format);
 
     fclose(assembly_output_stream);
 
 
     if (status == 0)
     {
-        status = bfc_run_backend(output_program_file_path, assembly_output_file_name);
+        status = bfc_run_backend(output_program_file_path, assembly_output_file_name, &compilation_format->assembler_info);
     }
 
     remove(assembly_output_file_name);
@@ -71,7 +76,11 @@ int bfc_compile_program(const char *source_code_file_path, const char *output_pr
     return status;
 }
 
-int bfc_compile_assembly(const char *source_code_file_path, const char *assembly_file_path)
+int bfc_compile_assembly(
+        const char *source_code_file_path,
+        const char *assembly_file_path,
+        const struct CompilationFormat *compilation_format
+)
 {
     FILE *source_code_stream = fopen(source_code_file_path, "r");
 
@@ -103,7 +112,7 @@ int bfc_compile_assembly(const char *source_code_file_path, const char *assembly
         abort();
     }
 
-    int status = bfc_run_frontend(source_code, source_code_length, assembly_output_stream);
+    int status = bfc_run_frontend(source_code, source_code_length, assembly_output_stream, &compilation_format->output_format);
 
     fclose(assembly_output_stream);
 

@@ -10,15 +10,18 @@ add_library(external
 add_library(bfc_core
         STATIC
         core/frontend.c core/frontend.h core/backend.c
-        core/frontend_asm.h core/temp_config.h)
+        core/backend.h)
 
 add_library(bfc_compilation
         STATIC
-
         compilation/compilation.c compilation/compilation.h)
+
+add_library(asm_format
+        asm_format/asm_format.h asm_format/gnu_asm_format.c asm_format/yasm_asm_format.c)
 
 add_executable(bfc main.c)
 
 target_link_libraries(bfc bfc_compilation)
 target_link_libraries(bfc external)
 target_link_libraries(bfc bfc_core)
+target_link_libraries(bfc asm_format)

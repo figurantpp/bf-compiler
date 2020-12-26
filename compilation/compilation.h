@@ -7,7 +7,22 @@
 
 #endif //BFC_COMPILATION_H
 
-int bfc_compile_program(const char *source_code_file_path, const char *output_program_file_path);
-int bfc_compile_assembly(const char *source_code_file_path, const char *assembly_file_path);
+#include "../asm_format/asm_format.h"
 
-typedef int BFCCompilerFunction(const char *input, const char *output);
+int bfc_compile_program(
+        const char *source_code_file_path,
+        const char *output_program_file_path,
+        const struct CompilationFormat *compilation_format
+);
+
+int bfc_compile_assembly(
+        const char *source_code_file_path,
+        const char *assembly_file_path,
+        const struct CompilationFormat *compilation_format
+);
+
+typedef int BFCCompilerFunction(
+        const char *input,
+        const char *output,
+        const struct CompilationFormat *compilation_format
+);

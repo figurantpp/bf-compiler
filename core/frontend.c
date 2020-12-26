@@ -13,12 +13,13 @@
 #define LEFT_BRACE_PREFIX "left_brace_"
 #define RIGHT_BRACE_PREFIX "right_brace_"
 
-#include "frontend_asm.h"
 
 #define NUMERIC_BUFFER_SIZE 64
 
 struct BFCState
 {
+    const struct AssemblyOutputFormat *output_format;
+
     const char *source_code;
     const char *source_code_cursor;
 
@@ -75,11 +76,11 @@ void bfc_compile_data_increment(struct BFCState *state)
 
     if (increment_count == 1)
     {
-        bfc_asm_increase_rsi_content(state->output_file);
+        state->output_format->increase_rsi_content(state->output_file);
     }
     else
     {
-        bfc_asm_add_rsi_content(state->output_file, increment_count);
+        state->output_format->add_rsi_content(state->output_file, increment_count);
     }
 
     fflush(state->output_file);
@@ -97,11 +98,11 @@ void bfc_compile_data_decrement(struct BFCState *state)
 
     if (decrement_count == 1)
     {
-        bfc_asm_decrease_rsi_content(state->output_file);
+        state->output_format->decrease_rsi_content(state->output_file);
     }
     else
     {
-        bfc_asm_subtract_rsi_content(state->output_file, decrement_count);
+        state->output_format->subtract_rsi_content(state->output_file, decrement_count);
 
     }
 
@@ -120,11 +121,11 @@ void bfc_compile_data_advance(struct BFCState *state)
 
     if (advance_count == 1)
     {
-        bfc_asm_increase_rsi(state->output_file);
+        state->output_format->increase_rsi(state->output_file);
     }
     else
     {
-        bfc_asm_add_rsi(state->output_file, advance_count);
+        state->output_format->add_rsi(state->output_file, advance_count);
     }
 
     fflush(state->output_file);
@@ -143,11 +144,11 @@ void bfc_compile_data_retreat(struct BFCState *state)
 
     if (retreat_count == 1)
     {
-        bfc_asm_decrease_rsi(state->output_file);
+        state->output_format->decrease_rsi(state->output_file);
     }
     else
     {
-        bfc_asm_subtract_rsi(state->output_file, retreat_count);
+        state->output_format->subtract_rsi(state->output_file, retreat_count);
     }
 
     fflush(state->output_file);
@@ -155,7 +156,7 @@ void bfc_compile_data_retreat(struct BFCState *state)
 
 void bfc_compile_write(struct BFCState *state)
 {
-    bfc_asm_write(state->output_file);
+    state->output_format->write_syscall(state->output_file);
 
     fflush(state->output_file);
 
@@ -164,7 +165,7 @@ void bfc_compile_write(struct BFCState *state)
 
 void bfc_compile_read(struct BFCState *state)
 {
-    bfc_asm_read(state->output_file);
+    state->output_format->read_syscall(state->output_file);
 
     fflush(state->output_file);
 }
@@ -181,8 +182,8 @@ int bfc_compile_left_brace(struct BFCState *state)
         return -1;
     }
 
-    bfc_asm_jump_if_zero(state->output_file, label_data->matching_label);
-    bfc_asm_set_label(state->output_file, label_data->self_label);
+    state->output_format->jump_if_zero(state->output_file, label_data->matching_label);
+    state->output_format->set_label(state->output_file, label_data->self_label);
 
     fflush(state->output_file);
 
@@ -203,8 +204,8 @@ int bfc_compile_right_brace(struct BFCState *state)
         return -1;
     }
 
-    bfc_asm_jump_if_not_zero(state->output_file, label_data->matching_label);
-    bfc_asm_set_label(state->output_file, label_data->self_label);
+    state->output_format->jump_if_not_zero(state->output_file, label_data->matching_label);
+    state->output_format->set_label(state->output_file, label_data->self_label);
 
     fflush(state->output_file);
 
@@ -223,32 +224,23 @@ int bfc_loop(struct BFCState *state)
     {
         switch (*state->source_code_cursor)
         {
-            case '+':
-                bfc_compile_data_increment(state);
+            case '+':bfc_compile_data_increment(state);
                 break;
-            case '-':
-                bfc_compile_data_decrement(state);
+            case '-':bfc_compile_data_decrement(state);
                 break;
-            case '>':
-                bfc_compile_data_advance(state);
+            case '>':bfc_compile_data_advance(state);
                 break;
-            case '<':
-                bfc_compile_data_retreat(state);
+            case '<':bfc_compile_data_retreat(state);
                 break;
-            case '[':
-                success = bfc_compile_left_brace(state) == 0;
+            case '[':success = bfc_compile_left_brace(state) == 0;
                 break;
-            case ']':
-                success = bfc_compile_right_brace(state) == 0;
+            case ']':success = bfc_compile_right_brace(state) == 0;
                 break;
-            case '.':
-                bfc_compile_write(state);
+            case '.':bfc_compile_write(state);
                 break;
-            case ',':
-                bfc_compile_read(state);
+            case ',':bfc_compile_read(state);
                 break;
-            default:
-                state->source_code_cursor++;
+            default:state->source_code_cursor++;
         }
     }
 
@@ -257,12 +249,12 @@ int bfc_loop(struct BFCState *state)
 
 void bfc_write_start(struct BFCState *state)
 {
-    bfc_asm_program_start(state->output_file);
+    state->output_format->program_start(state->output_file);
 }
 
 void bfc_write_end(struct BFCState *state)
 {
-    bfc_asm_program_end(state->output_file);
+    state->output_format->program_end(state->output_file);
 }
 
 static const char *bfc_get_matching_right_brace(struct BFCState *state, const char *const left_brace)
@@ -411,9 +403,11 @@ void bfc_cleanup(struct BFCState *state)
         }                 \
     })
 
-int bfc_run_frontend(const char *source_code, size_t source_code_length, FILE *output_file)
+int bfc_run_frontend(const char *source_code, size_t source_code_length, FILE *output_file,
+                     const struct AssemblyOutputFormat *output_format)
 {
     null_check(output_file, -1);
+    null_check(output_format, -1);
 
     struct BFCState state[1] = {};
 
@@ -421,6 +415,7 @@ int bfc_run_frontend(const char *source_code, size_t source_code_length, FILE *o
     state->source_code_length = source_code_length;
     state->source_code = source_code;
     state->source_code_cursor = source_code;
+    state->output_format = output_format;
 
     bfc_write_start(state);
 

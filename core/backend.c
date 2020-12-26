@@ -2,7 +2,9 @@
 // Created by figurantpp on 25/12/2020.
 //
 
-#include "temp_config.h"
+#include "../asm_format/asm_format.h"
+
+#include "backend.h"
 
 #define LINKER_PATH "/bin/ld"
 #define LINKER_NAME "ld"
@@ -11,24 +13,6 @@
 
 // TODO: Refactor this
 
-#if IS_NASM
-
-#define ASSEMBLER_PATH "/usr/bin/yasm"
-#define ASSEMBLER_NAME "yasm"
-
-#define construct_assembler_call(input_name, output_name) \
- "-f", "elf64", "-g", "dwarf2", \
- input_name, "-o", output_name
-
-#else
-
-#define ASSEMBLER_PATH "/usr/bin/as"
-#define ASSEMBLER_NAME "as"
-
-#define construct_assembler_call(input_name, output_name) \
-"--gen-debug", "-mmnemonic=att", "-msyntax=att",  input_name, "-o", output_name
-
-#endif
 
 #include <string.h>
 #include <stdio.h>
@@ -40,7 +24,7 @@
 
 
 // runs the assembler and returns the name of the object file.
-char *run_assembler(const char *assembly_file_name)
+char *run_assembler(const char *assembly_file_name, const struct AssemblerInfo *assembler)
 {
     char* object_file_name = strdup(BF_TEMP_OBJECT_FILE_TEMPLATE);
 
@@ -71,8 +55,7 @@ char *run_assembler(const char *assembly_file_name)
         case 0:
             // Child
 
-            if (execl(ASSEMBLER_PATH, ASSEMBLER_NAME,
-                      construct_assembler_call(assembly_file_name, object_file_name), NULL) == -1)
+            if (assembler->exec(assembly_file_name, object_file_name) == -1)
             {
                 perror("Failed to execute assembler");
                 exit(255);
@@ -97,7 +80,7 @@ char *run_assembler(const char *assembly_file_name)
 
     if (WEXITSTATUS(child_status) != 0)
     {
-        fprintf(stderr, "Assembler %s failed with status code %d", ASSEMBLER_NAME,
+        fprintf(stderr, "Assembler %s failed with status code %d", assembler->assembler_path,
                 WEXITSTATUS(child_status));
 
         remove(object_file_name);
@@ -150,9 +133,9 @@ int call_linker(const char *object_file_name, const char *output_file_name)
     return 0;
 }
 
-int bfc_run_backend(const char *output_file_name, const char *assembly_file_name)
+int bfc_run_backend(const char *output_file_name, const char *assembly_file_name, const struct AssemblerInfo *assembler)
 {
-    char *object_file_name = run_assembler(assembly_file_name);
+    char *object_file_name = run_assembler(assembly_file_name, assembler);
 
     if (object_file_name == NULL)
     {
