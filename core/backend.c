@@ -26,7 +26,7 @@
 #define ASSEMBLER_NAME "as"
 
 #define construct_assembler_call(input_name, output_name) \
-"-g", input_name, "-o", output_name
+"--gen-debug", "-mmnemonic=att", "-msyntax=att",  input_name, "-o", output_name
 
 #endif
 
