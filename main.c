@@ -5,23 +5,14 @@
 
 #include "compilation/compilation.h"
 
-#define BFC_EXIT_BAD_USAGE 2
-
-// #define BF_SOURCE_FILE_PATH "/home/figurantpp/Desktop/programming/c/bf-c/compiler_input/mandel.bf"
-// #define BF_OUTPUT_PROGRAM_PATH "/home/figurantpp/Desktop/programming/c/bf-c/cmake-build-debug/compiler-output"
-
-#define compilation_modes(x) \
-    x(STANDARD)              \
-    x(ASSEMBLY_ONLY)         \
-
-#define to_enum(macro) BFC_COMPILATION_MODE_##macro,
+#define BFC_EXIT_BAD_USAGE 50
 
 enum CompilationMode
 {
-    compilation_modes(to_enum)
+    BFC_COMPILATION_MODE_STANDARD,
+    BFC_COMPILATION_MODE_ASSEMBLY_ONLY
 };
 
-#undef to_enum
 
 #define COMMA ,
 
@@ -29,9 +20,9 @@ enum CompilationMode
     x(YASM, {"yasm"})                 \
     x(GNU, {"gnu" COMMA "gas"})
 
-#define to_enum(format, names) BFC_COMPILATION_FORMAT_##format,
+#define to_enum(format, names) BFC_COMPILATION_TYPE_##format,
 
-enum CompilationFormatType
+enum CompilationType
 {
     assembly_formats(to_enum)
 };
@@ -44,11 +35,11 @@ for (size_t i = 0; i < sizeof(format##_names) / sizeof(char*); i++) \
 {                                                                                                  \
     if (strcmp(given, format##_names[i]) == 0)                      \
     {                          \
-        return BFC_COMPILATION_FORMAT_##format;                       \
+        return BFC_COMPILATION_TYPE_##format;                       \
     }\
 }
 
-static enum CompilationFormatType get_assembly_format(const char *given)
+static enum CompilationType get_assembly_format(const char *given)
 {
     assembly_formats(to_array)
     assembly_formats(to_loop)
@@ -60,7 +51,17 @@ void show_usage(const char *program_name)
 {
     fprintf(stderr,
             ""
-            "Usage: %s [-S] [-f FORMAT] -i in_file -o out_file\n\n"
+            "Usage: %s [-h] [-S] [-f FORMAT] -i in_file -o out_file\n",
+
+            program_name);
+}
+
+void show_help(const char *program_name)
+{
+    show_usage(program_name);
+
+    fprintf(stderr,
+            "\n"
             "   FORMAT\n"
             "       The -F option defines what assembler and what assembly format bfc will use.\n"
             "       If -S is present, the assembly output of bfc will match the one accepted by the given -F format.\n\n"
@@ -69,18 +70,18 @@ void show_usage(const char *program_name)
             "           gnu|gas: The GNU Portable Assembler (/usr/bin/as) and the AT&T syntax will be used.\n\n"
             "           yasm: The Yasm Modular Assembler used (/usr/bin/yasm) and the Intel syntax will be used.\n\n"
 
-            "       The default format for -F is gnu.\n\n",
-
-            program_name);
+            "       The default format for -F is gnu.\n\n"
+    );
 }
 
 
 int main(int argc, char *argv[])
 {
 #define show_usage() ({show_usage(argv[0]);})
+#define show_help() ({show_help(argv[0]);})
 
     enum CompilationMode mode = BFC_COMPILATION_MODE_STANDARD;
-    enum CompilationFormatType format_type = BFC_COMPILATION_FORMAT_GNU;
+    enum CompilationType format_type = BFC_COMPILATION_TYPE_GNU;
 
     const char *given_assembly_format = NULL;
 
@@ -90,28 +91,26 @@ int main(int argc, char *argv[])
     int option;
 
 
-    while ((option = getopt(argc, argv, "Si:o:f:")) != -1)
+    while ((option = getopt(argc, argv, "Si:o:f:h")) != -1)
     {
         switch (option)
         {
-            case 'S':
-                mode = BFC_COMPILATION_MODE_ASSEMBLY_ONLY;
+            case 'S':mode = BFC_COMPILATION_MODE_ASSEMBLY_ONLY;
                 break;
 
-            case 'o':
-                output_file = optarg;
+            case 'o':output_file = optarg;
                 break;
 
-            case 'i':
-                input_file = optarg;
+            case 'i':input_file = optarg;
                 break;
 
-            case 'f':
-                given_assembly_format = optarg;
+            case 'f':given_assembly_format = optarg;
                 break;
 
-            default:
-                show_usage();
+            case 'h':show_help();
+                exit(EXIT_SUCCESS);
+
+            default:show_usage();
                 exit(BFC_EXIT_BAD_USAGE);
         }
     }
@@ -136,7 +135,7 @@ int main(int argc, char *argv[])
 
         if (format_type == -1)
         {
-            fprintf(stderr, "Invalid format option '%s'\n\n", given_assembly_format);
+            fprintf(stderr, "Invalid format option (-f) '%s'\n\n", given_assembly_format);
             error = 1;
         }
     }
@@ -147,15 +146,15 @@ int main(int argc, char *argv[])
         exit(BFC_EXIT_BAD_USAGE);
     }
 
-    const struct CompilationFormat* formats[] = {
-        [BFC_COMPILATION_FORMAT_GNU] = bfc_gnu_assembly_format(),
-        [BFC_COMPILATION_FORMAT_YASM] = bfc_yasm_assembly_format(),
+    const struct CompilationFormat *formats[] = {
+            [BFC_COMPILATION_TYPE_GNU] = bfc_gnu_assembly_format(),
+            [BFC_COMPILATION_TYPE_YASM] = bfc_yasm_assembly_format(),
     };
 
-    BFCCompilerFunction* functions[] = {
+    BFCCompilerFunction *functions[] = {
             [BFC_COMPILATION_MODE_STANDARD] = bfc_compile_program,
             [BFC_COMPILATION_MODE_ASSEMBLY_ONLY] = bfc_compile_assembly
     };
 
-    return functions[mode](input_file, output_file, formats[format_type]);
+    exit(functions[mode](input_file, output_file, formats[format_type]));
 }
