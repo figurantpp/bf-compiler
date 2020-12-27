@@ -20,8 +20,8 @@ static inline const char * get_program_name()
 static void write_usage(const char *program_name, FILE *file)
 {
     fprintf(file,
-            ""
-            "Usage: %s [-h] [-v] [-S] [-f FORMAT] in_file -o out_file\n",
+            "\n"
+            "Usage: %s [-h] [-v] [-S] [-f FORMAT] in_file -o out_file\n\n",
             program_name);
 }
 
@@ -36,15 +36,28 @@ void show_help()
 
     fprintf(stdout,
             "\n"
+            "   OPTIONS\n"
+            "       -h\n"
+            "           Display this help message\n\n"
+
+            "       -v\n"
+            "           Show program version\n\n"
+
+            "       -S\n"
+            "           Stop after compiling code.\n"
+            "           The compiler will not execute the assembler nor the linker, but will only compile the source code instead.\n"
+            "           The compiler's output (-o flag) will be the produced assembly code on instead of the assembled and liked program.\n"
+            "           The produced assembly code will match the one given by -f\n\n"
+
             "   FORMAT\n"
-            "       The -F option defines what assembler and what assembly format bfc will use.\n"
-            "       If -S is present, the assembly output of bfc will match the one accepted by the given -F format.\n\n"
+            "       The -f option defines the assembly output format and the used assembler the compiler will use.\n"
+            "       If -S is present, the assembly output of the comiler will match the one accepted by the given -F format.\n\n"
 
             "       Format Options:\n"
             "           gnu|gas: The GNU Portable Assembler (/usr/bin/as) and the AT&T syntax will be used.\n\n"
             "           yasm: The Yasm Modular Assembler used (/usr/bin/yasm) and the Intel syntax will be used.\n\n"
 
-            "       The default format for -F is gnu.\n\n"
+            "       The default format for -F is \"gas\".\n\n"
     );
 }
 

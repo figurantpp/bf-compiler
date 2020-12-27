@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define BFC_EXIT_IO 10
+
 #define BF_ASSEMBLY_TEMP_FILE_TEMPLATE "bfc_tmp_asm_XXXXXX"
 
 int bfc_compile_program(
@@ -22,8 +24,8 @@ int bfc_compile_program(
 
     if (source_code_stream == NULL)
     {
-        perror("Failed to read source code");
-        abort();
+        perror("Failed to open source code file");
+        exit(BFC_EXIT_IO);
     }
 
     size_t source_code_length = 0;
@@ -35,8 +37,8 @@ int bfc_compile_program(
 
     if (source_code == NULL)
     {
-        perror("Failed to read source code");
-        abort();
+        perror("Failed to load source code");
+        exit(BFC_EXIT_IO);
     }
 
     char assembly_output_file_name[] = BF_ASSEMBLY_TEMP_FILE_TEMPLATE;
@@ -47,7 +49,7 @@ int bfc_compile_program(
     {
         perror("Failed to create file to write assembly output");
         free(source_code);
-        abort();
+        exit(BFC_EXIT_IO);
     }
 
     FILE *assembly_output_stream = fdopen(assembly_output_file, "w");
