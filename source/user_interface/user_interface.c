@@ -5,20 +5,36 @@
 #include "user_interface.h"
 #include "user_interface_static.h"
 
-void show_usage(const char *program_name)
-{
-    fprintf(stderr,
-            ""
-            "Usage: %s [-h] [-S] [-f FORMAT] in_file -o out_file\n",
+#define PROGRAM_VERSION "0.0.1"
 
+// Declaring a macro that returns an rvalue is a good way of preventing us from
+// writing to the global variable more than once.
+
+const char * internal_program_name;
+
+static inline const char * get_program_name()
+{ return internal_program_name; }
+
+#define global_program_name get_program_name()
+
+static void write_usage(const char *program_name, FILE *file)
+{
+    fprintf(file,
+            ""
+            "Usage: %s [-h] [-v] [-S] [-f FORMAT] in_file -o out_file\n",
             program_name);
 }
 
-void show_help(const char *program_name)
+static void error_show_usage()
 {
-    show_usage(program_name);
+    write_usage(global_program_name, stderr);
+}
 
-    fprintf(stderr,
+void show_help()
+{
+    write_usage(global_program_name, stdout);
+
+    fprintf(stdout,
             "\n"
             "   FORMAT\n"
             "       The -F option defines what assembler and what assembly format bfc will use.\n"
@@ -32,10 +48,21 @@ void show_help(const char *program_name)
     );
 }
 
-void execute_command_line_arguments(int argc, char * const argv[])
+void show_version()
 {
-#define show_usage() ({show_usage(argv[0]);})
-#define show_help() ({show_help(argv[0]);})
+    printf("%s (BFC) %s\nAuthor: figurant++\n", global_program_name, PROGRAM_VERSION);
+}
+
+void execute_command_line_arguments(int argc, char *const argv[])
+{
+    // yes, this can happen.
+    if (argc == 0)
+    {
+        write_usage("bfc", stderr);
+        exit(BFC_EXIT_BAD_USAGE);
+    }
+
+    internal_program_name = argv[0];
 
     enum CompilationMode mode = BFC_COMPILATION_MODE_STANDARD;
     enum CompilationType format_type = BFC_COMPILATION_TYPE_GNU;
@@ -47,7 +74,7 @@ void execute_command_line_arguments(int argc, char * const argv[])
 
     int option;
 
-    while ((option = getopt(argc, argv, "So:f:h")) != -1)
+    while ((option = getopt(argc, argv, "So:f:hv")) != -1)
     {
         switch (option)
         {
@@ -62,8 +89,10 @@ void execute_command_line_arguments(int argc, char * const argv[])
 
             case 'h':show_help();
                 exit(EXIT_SUCCESS);
+            case 'v':show_version();
+                exit(EXIT_SUCCESS);
 
-            default:show_usage();
+            default:error_show_usage();
                 exit(BFC_EXIT_BAD_USAGE);
         }
     }
@@ -99,7 +128,7 @@ void execute_command_line_arguments(int argc, char * const argv[])
 
     if (error)
     {
-        show_usage();
+        error_show_usage();
         exit(BFC_EXIT_BAD_USAGE);
     }
 
