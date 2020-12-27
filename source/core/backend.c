@@ -13,7 +13,6 @@
 
 // TODO: Refactor this
 
-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,6 +25,15 @@
 // runs the assembler and returns the name of the object file.
 char *run_assembler(const char *assembly_file_name, const struct AssemblerInfo *assembler)
 {
+    if (access(assembler->assembler_path, X_OK) == -1)
+    {
+        // File exists
+
+        fprintf(stderr,"The selected assembler program (%s) could not be found.\n", assembler->assembler_path);
+
+        return NULL;
+    }
+
     char* object_file_name = strdup(BF_TEMP_OBJECT_FILE_TEMPLATE);
 
     if (object_file_name == NULL)
@@ -94,6 +102,12 @@ char *run_assembler(const char *assembly_file_name, const struct AssemblerInfo *
 
 int call_linker(const char *object_file_name, const char *output_file_name)
 {
+    if (access(LINKER_PATH, X_OK) == -1)
+    {
+        perror("This program's linker program (" LINKER_PATH ") is not present.");
+        return -1;
+    }
+
     int child_pid = fork();
 
     switch (child_pid)
