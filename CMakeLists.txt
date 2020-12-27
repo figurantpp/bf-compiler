@@ -19,8 +19,11 @@ add_library(bfc_compilation
 add_library(asm_format
         asm_format/asm_format.h asm_format/gnu_asm_format.c asm_format/yasm_asm_format.c)
 
+add_library(user_interface user_interface/user_interface.c user_interface/user_interface.h user_interface/user_interface_static.h)
+
 add_executable(bfc main.c)
 
+target_link_libraries(bfc user_interface)
 target_link_libraries(bfc bfc_compilation)
 target_link_libraries(bfc external)
 target_link_libraries(bfc bfc_core)
